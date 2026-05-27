@@ -47,15 +47,15 @@ eksctl version \
 **Command to create EKS cluster:** \
 --> eksctl create cluster --name demo --region <region-name> --version <k8s_version> --nodegroup-name <nodegroup-name> \
 -- node-type <ec2-type> --nodes <node-count> \
-Ex: eksctl create cluster --name demo --region ap-south-1 --version 1.34 --nodegroup-name linux-nodes --node-type t2.micro \
---nodes 2
+Ex: eksctl create cluster --name demo --region ap-south-1 --version 1.34 --nodegroup-name linux-nodes \
+--node-type t2.micro --nodes 2
 
 ==> Command to delete cluster: Once your work done, don't forget to delete the resources. \
  --> eksctl delete cluster --region=ap-south-1 --name=demo
 
 **Step 2 — Create GitHub OIDC Provider in AWS**: \
  AWS must trust GitHub's identity provider. \
- Go to: AWS Console → IAM → Identity Providers → Add Provider. \
+ Go to: AWS Console → IAM → Identity Providers → Add Provider. 
  
  Provider details: \
  Provider Type ---- OpenID Connect (OIDC is an identity layer on top of OAuth 2.0 and GitHub becomes an Identity Provider \
