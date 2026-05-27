@@ -1,44 +1,44 @@
-# Gh-eks-integration
-This repo contains Github actions and EKS integration guide:
+# Gh-eks-integration \
+This repo contains Github actions and EKS integration guide: \
 
 **Architecture:**
 <img width="1610" height="964" alt="image" src="https://github.com/user-attachments/assets/a32df857-d01e-4da6-88a2-0aae5ea6efa8" />
 
-**Flow:**
-Developer pushes code to GitHub
-GitHub Actions workflow starts
-GitHub generates OIDC JWT token
-AWS IAM validates token via OIDC Provider
-GitHub assumes IAM Role using sts:AssumeRoleWithWebIdentity
-Temporary AWS credentials are issued
-Workflow accesses EKS cluster
-Deployments happen using kubectl/helm
+**Flow:** \
+Developer pushes code to GitHub \
+GitHub Actions workflow starts \
+GitHub generates OIDC JWT token \
+AWS IAM validates token via OIDC Provider \
+GitHub assumes IAM Role using sts:AssumeRoleWithWebIdentity \
+Temporary AWS credentials are issued \
+Workflow accesses EKS cluster \
+Deployments happen using kubectl/helm \
 
-**Prerequisites:**
-AWS account
-Existing GitHub repository
-Existing Amazon Web Services EKS cluster
-kubectl knowledge
-IAM permissions
+**Prerequisites:** \
+AWS account \
+Existing GitHub repository \
+Existing Amazon Web Services EKS cluster \
+kubectl knowledge \
+IAM permissions \
 
 **Step 1 — Create EKS Cluster:** \
 I am using eksctl to create eks cluster for time being. \
 **1) eksctl installation : (Ubuntu )** \
 Note: In Redhat this installation is not working \
 
-  Install Eksctl tar file first,
+  Install Eksctl tar file first, \
    curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/ \
    eksctl_$(uname -s)_amd64.tar.gz"     | tar xz -C /tmp \
   Move eksctl binary to bin location \
   mv eksctl /usr/local/bin \
-  eksctl --version
+  eksctl --version \
 **eksctl installation :(Amazon Linux)** \
 1. Here, we’re using the curl command to download the most recent version of the eksctl package into a tar file, which \
 we then untar under the tmp directory with the following command.
 
 1) curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/ \
 eksctl_$(uname -s)_amd64.tar.gz"  | tar xz -C /tmp \
-Installing and untar the eksctl
+Installing and untar the eksctl \
 
 2. Data from the untar eksctl package is being transferred to the /usr/local/bin directory. \
 sudo mv /tmp/eksctl /usr/local/bin \
