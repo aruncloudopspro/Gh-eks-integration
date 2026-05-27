@@ -33,8 +33,8 @@ Note: In Redhat this installation is not working \
   mv eksctl /usr/local/bin \
   eksctl --version \
 **eksctl installation :(Amazon Linux)** \
-1. Here, we’re using the curl command to download the most recent version of the eksctl package into a tar file, which \
-we then untar under the tmp directory with the following command.
+1. Here, we’re using the curl command to download the most recent version of the eksctl package into a tar file, \
+which we then untar under the tmp directory with the following command.
 
 1) curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/ \
 eksctl_$(uname -s)_amd64.tar.gz"  | tar xz -C /tmp \
