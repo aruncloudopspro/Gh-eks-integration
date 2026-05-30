@@ -1,0 +1,37 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::125814690975:role/gh-eks-demo-role
+          aws-region: ap-south-2
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
+      - name: Configure kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ap-south-2 \
+            --name demo
+
+      - name: Verify EKS Access
+        run: |
+          kubectl get nodes
