@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gh-eks-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gh-eks-app
+  template:
+    metadata:
+      labels:
+        app: gh-eks-app
+    spec:
+      containers:
+      - name: gh-eks-app
+        image: IMAGE_PLACEHOLDER
+        ports:
+        - containerPort: 80
