@@ -1,148 +1,220 @@
-# Gh-eks-integration \
-This repo contains Github actions and EKS integration guide: 
+# 🚀 Deploy to Amazon EKS using GitHub Actions OIDC (Without AWS Access Keys)
 
-**Architecture:**
-<img width="1610" height="964" alt="image" src="https://github.com/user-attachments/assets/a32df857-d01e-4da6-88a2-0aae5ea6efa8" />
+<p align="center">
 
-**Flow:** \
-Developer pushes code to GitHub \
-GitHub Actions workflow starts \
-GitHub generates OIDC JWT token \
-AWS IAM validates token via OIDC Provider \
-GitHub assumes IAM Role using sts:AssumeRoleWithWebIdentity \
-Temporary AWS credentials are issued \
-Workflow accesses EKS cluster \
-Deployments happen using kubectl/helm \
+![GitHub Actions](https://img.shields.io/badge/GitHub-Actions-2088FF?style=for-the-badge\&logo=github-actions\&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-EKS-FF9900?style=for-the-badge\&logo=amazonaws\&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-v1.34-326CE5?style=for-the-badge\&logo=kubernetes\&logoColor=white)
+![OIDC](https://img.shields.io/badge/OIDC-WebIdentity-success?style=for-the-badge)
+![Terraform](https://img.shields.io/badge/CI/CD-GitOps-blue?style=for-the-badge)
 
-**Prerequisites:** \
-AWS account \
-Existing GitHub repository \
-Existing Amazon Web Services EKS cluster \
-kubectl knowledge \
-IAM permissions \
+</p>
 
-**Step 1 — Create EKS Cluster:** \
-I am using eksctl to create eks cluster for time being. \
-**1) eksctl installation : (Ubuntu )** \
-Note: In Redhat this installation is not working \
+---
 
-  Install Eksctl tar file first, \
-   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/ \
-   eksctl_$(uname -s)_amd64.tar.gz"     | tar xz -C /tmp \
-  Move eksctl binary to bin location \
-  mv eksctl /usr/local/bin \
-  eksctl --version \
-**eksctl installation :(Amazon Linux)** \
-1. Here, we’re using the curl command to download the most recent version of the eksctl package into a tar file, \
-which we then untar under the tmp directory with the following command.
+# 📌 Overview
 
-1) curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/ \
-eksctl_$(uname -s)_amd64.tar.gz"  | tar xz -C /tmp \
-Installing and untar the eksctl \
+This project demonstrates **passwordless authentication** between **GitHub Actions** and **Amazon EKS** using **OpenID Connect (OIDC)**.
 
-2. Data from the untar eksctl package is being transferred to the /usr/local/bin directory. \
-sudo mv /tmp/eksctl /usr/local/bin \
-eksctl version \
+Instead of storing long-lived AWS Access Keys inside GitHub Secrets, GitHub dynamically requests a **JWT Token**, which AWS validates through an **OIDC Identity Provider**.
 
-**Command to create EKS cluster:** \
---> eksctl create cluster --name demo --region <region-name> --version <k8s_version> --nodegroup-name <nodegroup-name> \
--- node-type <ec2-type> --nodes <node-count> \
-Ex: eksctl create cluster --name demo --region ap-south-1 --version 1.34 --nodegroup-name linux-nodes \
---node-type t2.micro --nodes 2
+After successful validation, AWS Security Token Service (STS) issues **temporary credentials**, allowing GitHub Actions to securely deploy applications into Amazon EKS.
 
-==> Command to delete cluster: Once your work done, don't forget to delete the resources. \
- --> eksctl delete cluster --region=ap-south-1 --name=demo
+This is the **AWS recommended production-grade authentication mechanism**.
 
-**Step 2 — Create GitHub OIDC Provider in AWS**: \
- AWS must trust GitHub's identity provider. \
- Go to: AWS Console → IAM → Identity Providers → Add Provider. 
- 
- Provider details: \
- Provider Type ---- OpenID Connect (OIDC is an identity layer on top of OAuth 2.0 and GitHub becomes an Identity Provider \
- Provider URL  ---- https://token.actions.githubusercontent.com (This represents who is issuing the identity token?) \
- Audience      ---- sts.amazonaws.com (Audience means who is this token intended for?) \
+---
 
- What Happens Internally?
-  GitHub generates a JWT token like: \
-    { \
-  "iss": "https://token.actions.githubusercontent.com", \
-  "sub": "repo:arun/demo:ref:refs/heads/main", \
-  "aud": "sts.amazonaws.com"
- }
+# 🏗️ Architecture
 
- We can use aws-cli to configure this, \
- aws iam create-open-id-connect-provider --url https://token.actions.githubusercontent.com \
- --client-id-list sts.amazonaws.com --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+```text
+                        Developer
+                            │
+                            │ Git Push
+                            ▼
+                  GitHub Repository
+                            │
+                            ▼
+                 GitHub Actions Workflow
+                            │
+             Generates OIDC JWT Token
+                            │
+                            ▼
+                AWS IAM OIDC Provider
+                            │
+                    Validates Token
+                            │
+                            ▼
+      STS AssumeRoleWithWebIdentity()
+                            │
+          Temporary AWS Credentials
+                            │
+                            ▼
+                  Amazon EKS Cluster
+                            │
+                     kubectl / Helm
+                            │
+                            ▼
+                 Kubernetes Deployment
+```
 
-**Step 3 — Create IAM Policy for EKS Access**: \
-**Step 4 — Create IAM Role for GitHub Actions**: \
-**Step 5 — Map IAM Role to EKS RBAC**: \
-  AWS IAM authentication alone is NOT enough. \
-  EKS must authorize this IAM role inside Kubernetes. \
-  kubectl edit configmap aws-auth -n kube-system and add below lines \
-  
-  mapRoles: | 
-  - rolearn: arn:aws:iam::<ACCOUNT_ID>:role/GitHubActionsEKSRole \
-    username: github-actions 
-    groups: 
-      - system:masters
+---
 
-**Note: system:masters gives admin access. For production, use limited RBAC roles instead.**
+# 🔄 Complete Workflow
 
-**Step 6 — Configure GitHub Actions Workflow**:
-Workflow:
-  name: Deploy to EKS
+```text
+Developer pushes code
+          │
+          ▼
+GitHub Actions Workflow Starts
+          │
+          ▼
+GitHub generates OIDC JWT Token
+          │
+          ▼
+AWS validates JWT using OIDC Provider
+          │
+          ▼
+STS AssumeRoleWithWebIdentity
+          │
+          ▼
+Temporary Credentials Issued
+          │
+          ▼
+Update kubeconfig
+          │
+          ▼
+kubectl / Helm Deployment
+          │
+          ▼
+Application deployed successfully
+```
 
-on:
-  push:
-    branches:
-      - main
+---
 
-permissions:
-  id-token: write
-  contents: read
+# ⭐ Why OIDC?
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+Traditional CI/CD pipelines store:
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+❌ AWS Access Key
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/GitHubActionsEKSRole
-          aws-region: ap-south-1
+❌ AWS Secret Key
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+inside GitHub Secrets.
 
-      - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig \
-            --region ap-south-1 \
-            --name demo-eks
+Problems:
 
-      - name: Verify Cluster Access
-        run: kubectl get nodes
+* Credentials can expire.
+* Secrets may leak.
+* Manual rotation required.
+* Higher security risk.
 
-      - name: Deploy Application
-        run: |
-          kubectl apply -f deployment.yaml
+Using OIDC:
 
-**Step 7 — Push Code**
-  git add . \
-  git commit -m "eks oidc setup" \
-  git push origin main
+✅ No AWS Access Keys
 
-  GitHub Actions will: \
-    Generate OIDC token \
-    Assume IAM role \
-    Connect to EKS \
-    Deploy application .
+✅ Temporary Credentials
 
---> To play with kubernetes install kubectl client and execute some commands.
-  
+✅ Least Privilege
+
+✅ Automatic Token Generation
+
+✅ AWS Recommended
+
+---
+
+# 📋 Prerequisites
+
+Before starting this lab, make sure you have:
+
+| Requirement                 | Status |
+| --------------------------- | ------ |
+| AWS Account                 | ✅      |
+| GitHub Repository           | ✅      |
+| Existing Amazon EKS Cluster | ✅      |
+| IAM Permissions             | ✅      |
+| kubectl Installed           | ✅      |
+| Basic Kubernetes Knowledge  | ✅      |
+| AWS CLI Configured          | ✅      |
+
+---
+
+# 🛠 Step 1 — Create Amazon EKS Cluster
+
+For this demo, we'll create the cluster using **eksctl**.
+
+## Install eksctl (Ubuntu)
+
+```bash
+curl --silent --location \
+"https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+| tar xz -C /tmp
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl version
+```
+
+---
+
+## Install eksctl (Amazon Linux)
+
+```bash
+curl --silent --location \
+"https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
+| tar xz -C /tmp
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl version
+```
+
+> **Note:** The above installation works for Ubuntu and Amazon Linux. If you're using Red Hat Enterprise Linux, follow the official `eksctl` installation instructions.
+
+---
+
+## Create EKS Cluster
+
+```bash
+eksctl create cluster \
+--name demo \
+--region ap-south-1 \
+--version 1.34 \
+--nodegroup-name linux-nodes \
+--node-type t2.micro \
+--nodes 2
+```
+
+Cluster creation usually takes **15–20 minutes**.
+
+---
+
+## Verify Cluster
+
+```bash
+kubectl get nodes
+```
+
+Expected output:
+
+```text
+NAME                                          STATUS   ROLES    AGE
+ip-192-168-xx-xx.ap-south-1.compute.internal  Ready    <none>
+ip-192-168-yy-yy.ap-south-1.compute.internal  Ready    <none>
+```
+
+---
+
+## Delete Cluster (Cleanup)
+
+After completing the demo, don't forget to delete the cluster to avoid unnecessary AWS charges.
+
+```bash
+eksctl delete cluster \
+--region ap-south-1 \
+--name demo
+```
+
+---
+
+
 
