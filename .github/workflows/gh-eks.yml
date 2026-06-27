@@ -59,4 +59,4 @@ jobs:
 
           kubectl apply -f service.yaml
 
-          kubectl rollout status deployment/gh-eks-app
+          kubectl rollout status deployment/nginx-deployment
