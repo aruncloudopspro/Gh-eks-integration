@@ -20,7 +20,7 @@ Instead of storing long-lived AWS Access Keys inside GitHub Secrets, GitHub dyna
 
 After successful validation, AWS Security Token Service (STS) issues **temporary credentials**, allowing GitHub Actions to securely deploy applications into Amazon EKS.
 
-This is the **AWS recommended production-grade authentication mechanism**.
+This is the **AWS recommended production-grade authentication mechanism**
 
 ---
 
