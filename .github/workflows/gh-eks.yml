@@ -9,9 +9,9 @@ permissions:
   id-token: write
   contents: read
 env:
-  AWS_REGION: ap-south-2
+  AWS_REGION: ap-south-1
   EKS_CLUSTER_NAME: demo
-  ECR_REPOSITORY: gh-eks-integration
+  ECR_REPOSITORY: gh-eks-ecr
 
 jobs:
   deploy:
@@ -24,8 +24,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::125814690975:role/gh-eks-role
-          aws-region: ap-south-2
+          role-to-assume: arn:aws:iam::101244608867:role/gh-eks-role
+          aws-region: ap-south-1
           
       - name: Login to ECR
         id: login-ecr
@@ -45,7 +45,7 @@ jobs:
       - name: Configure kubeconfig
         run: |
           aws eks update-kubeconfig \
-            --region ap-south-2 \
+            --region ap-south-1 \
             --name demo
 
       - name: Deploy to EKS
