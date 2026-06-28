@@ -18,7 +18,7 @@ This project demonstrates **passwordless authentication** between **GitHub Actio
 
 Instead of storing long-lived AWS Access Keys inside GitHub Secrets, GitHub dynamically requests a **JWT Token**, which AWS validates through an **OIDC Identity Provider**.
 
-After successful validation, AWS Security Token Service (STS) issues **temporary credentials**, allowing GitHub Actions to securely deploy applications into Amazon EKS.
+Aftersuccessful validation, AWS Security Token Service (STS) issues **temporary credentials**, allowing GitHub Actions to securely deploy applications into Amazon EKS.
 
 This is the **AWS recommended production-grade authentication mechanism**
 
